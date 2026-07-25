@@ -1,5 +1,6 @@
 import { Actor, log } from 'apify';
 import { Impit } from 'impit';
+import { CookieJar } from 'tough-cookie';
 
 const DEFAULT_START_URL = 'https://www.capterra.com/p/190778/QuickBooks-Online/reviews/';
 const REVIEWS_PER_PAGE = 25;
@@ -74,28 +75,35 @@ function getRscHeaders(url) {
     };
 }
 
-function createClient(browser, proxyUrl) {
-    return new Impit({
+function createClient(browser, proxyUrl, cookieJar) {
+    const opts = {
         browser,
-        ignoreTlsErrors: true,
-        ...(proxyUrl && { proxyUrl }),
         timeout: 30000,
-    });
+    };
+    if (proxyUrl) opts.proxyUrl = proxyUrl;
+    if (cookieJar) {
+        opts.cookieJar = {
+            getCookieString: (url) => cookieJar.getCookieString(url),
+            setCookie: (cookie, url) => cookieJar.setCookie(cookie, url),
+        };
+    }
+    return new Impit(opts);
 }
 
 async function fetchPage(url, session, proxyConf) {
     const maxRetries = 5;
+    const isCloud = Actor.isAtHome();
+    const useProxyOnFirstAttempt = isCloud && proxyConf != null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         const browser = BROWSER_PROFILES[(attempt - 1) % BROWSER_PROFILES.length];
 
-        if (attempt === 1 && session.client) {
-            // Reuse persisted client across pages (cookies + TLS intact)
-        } else {
-            // On retry: rotate browser fingerprint and IP
-            const proxyUrl = proxyConf ? await proxyConf.newUrl() : undefined;
+        const needsNewClient = attempt > 1 || !session.client || useProxyOnFirstAttempt;
+        if (needsNewClient) {
+            const shouldProxy = proxyConf != null && (useProxyOnFirstAttempt || attempt > 1);
+            const proxyUrl = shouldProxy ? await proxyConf.newUrl() : undefined;
             /* eslint-disable-next-line no-param-reassign */
-            session.client = createClient(browser, proxyUrl);
+            session.client = createClient(browser, proxyUrl, session.cookieJar);
             /* eslint-disable-next-line no-param-reassign */
             session.proxyUrl = proxyUrl;
         }
@@ -247,17 +255,10 @@ async function run() {
         if (saved >= resultsWanted) break;
 
         const session = {
-            client: createClient(BROWSER_PROFILES[0], undefined),
+            cookieJar: new CookieJar(),
+            client: null,
             proxyUrl: undefined,
         };
-
-        const startPage = Number(baseUrl.searchParams.get('page')) || 1;
-
-        if (startPage > 1) {
-            const b = new URL(baseUrl.href);
-            b.searchParams.delete('page');
-            await fetchPage(buildPageUrl(b, 1), session, proxyConf);
-        }
 
         for (let page = 1; page <= maxPages && saved < resultsWanted; page++) {
             const pageUrl = buildPageUrl(baseUrl, page);
