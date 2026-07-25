@@ -1,0 +1,45 @@
+{
+    "title": "Capterra Review Scraper",
+    "description": "Extract verified Capterra product reviews from a product or reviews URL.",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "url": {
+            "title": "Capterra URL",
+            "type": "string",
+            "description": "Capterra product or reviews URL. Product URLs are automatically converted to the reviews page.",
+            "editor": "textfield",
+            "prefill": "https://www.capterra.com/p/190778/QuickBooks-Online/"
+        },
+        "results_wanted": {
+            "title": "Results wanted",
+            "type": "integer",
+            "description": "Maximum number of reviews to collect.",
+            "minimum": 1,
+            "default": 20,
+            "prefill": 20,
+            "editor": "number"
+        },
+        "max_pages": {
+            "title": "Maximum pages",
+            "type": "integer",
+            "description": "Maximum number of Capterra review pages to fetch. Each page usually contains up to 25 reviews.",
+            "minimum": 1,
+            "default": 3,
+            "prefill": 3,
+            "editor": "number"
+        },
+        "proxyConfiguration": {
+            "title": "Proxy configuration",
+            "type": "object",
+            "description": "Residential proxies are recommended for Capterra.",
+            "editor": "proxy",
+            "default": {
+                "useApifyProxy": true,
+                "apifyProxyGroups": ["RESIDENTIAL"]
+            }
+        }
+    },
+    "required": ["url"],
+    "additionalProperties": false
+}

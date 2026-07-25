@@ -1,0 +1,204 @@
+{
+    "actorSpecification": 1,
+    "fields": {
+        "review_id": {
+            "title": "Review ID",
+            "type": "string",
+            "description": "Capterra review identifier."
+        },
+        "product_name": {
+            "title": "Product Name",
+            "type": "string",
+            "description": "Reviewed software product name."
+        },
+        "review_title": {
+            "title": "Review Title",
+            "type": "string",
+            "description": "Review headline."
+        },
+        "review_date": {
+            "title": "Review Date",
+            "type": "string",
+            "description": "Published review date as shown by Capterra."
+        },
+        "overall_rating": {
+            "title": "Overall Rating",
+            "type": "number",
+            "description": "Overall star rating."
+        },
+        "ease_of_use_rating": {
+            "title": "Ease of Use",
+            "type": "number",
+            "description": "Ease of use rating."
+        },
+        "customer_service_rating": {
+            "title": "Customer Service",
+            "type": "number",
+            "description": "Customer service rating."
+        },
+        "features_rating": {
+            "title": "Features",
+            "type": "number",
+            "description": "Features rating."
+        },
+        "value_for_money_rating": {
+            "title": "Value for Money",
+            "type": "number",
+            "description": "Value for money rating."
+        },
+        "likelihood_to_recommend_rating": {
+            "title": "Likelihood to Recommend",
+            "type": "number",
+            "description": "Likelihood to recommend rating."
+        },
+        "reviewer_name": {
+            "title": "Reviewer Name",
+            "type": "string",
+            "description": "Reviewer display name."
+        },
+        "reviewer_title": {
+            "title": "Reviewer Title",
+            "type": "string",
+            "description": "Reviewer role or job title."
+        },
+        "reviewer_industry": {
+            "title": "Reviewer Industry",
+            "type": "string",
+            "description": "Reviewer industry."
+        },
+        "reviewer_company_size": {
+            "title": "Company Size",
+            "type": "string",
+            "description": "Reviewer company size."
+        },
+        "reviewer_time_used": {
+            "title": "Time Used",
+            "type": "string",
+            "description": "How long the reviewer used the product."
+        },
+        "pros": {
+            "title": "Pros",
+            "type": "string",
+            "description": "Positive review text."
+        },
+        "cons": {
+            "title": "Cons",
+            "type": "string",
+            "description": "Negative review text."
+        },
+        "review_source": {
+            "title": "Review Source",
+            "type": "string",
+            "description": "Review source disclosure."
+        },
+        "general_comments": {
+            "title": "General Comments",
+            "type": "string",
+            "description": "General review comments."
+        },
+        "advice_to_others": {
+            "title": "Advice to Others",
+            "type": "string",
+            "description": "Reviewer advice to other buyers."
+        },
+        "incentive": {
+            "title": "Incentive",
+            "type": "string",
+            "description": "Incentive disclosure code."
+        },
+        "source_site": {
+            "title": "Source Site",
+            "type": "string",
+            "description": "Source review site."
+        },
+        "product_url": {
+            "title": "Product URL",
+            "type": "string",
+            "description": "Capterra review page URL."
+        },
+        "page": {
+            "title": "Page",
+            "type": "integer",
+            "description": "Review page number."
+        },
+        "total_reviews": {
+            "title": "Total Reviews",
+            "type": "integer",
+            "description": "Total review count shown by Capterra."
+        }
+    },
+    "views": {
+        "overview": {
+            "title": "Overview",
+            "transformation": {
+                "fields": [
+                    "review_id",
+                    "product_name",
+                    "review_title",
+                    "review_date",
+                    "overall_rating",
+                    "reviewer_name",
+                    "reviewer_industry",
+                    "reviewer_company_size",
+                    "pros",
+                    "cons",
+                    "general_comments",
+                    "product_url"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "review_id": {
+                        "label": "Review ID",
+                        "format": "text"
+                    },
+                    "product_name": {
+                        "label": "Product",
+                        "format": "text"
+                    },
+                    "review_title": {
+                        "label": "Title",
+                        "format": "text"
+                    },
+                    "review_date": {
+                        "label": "Date",
+                        "format": "text"
+                    },
+                    "overall_rating": {
+                        "label": "Rating",
+                        "format": "number"
+                    },
+                    "reviewer_name": {
+                        "label": "Reviewer",
+                        "format": "text"
+                    },
+                    "reviewer_industry": {
+                        "label": "Industry",
+                        "format": "text"
+                    },
+                    "reviewer_company_size": {
+                        "label": "Company Size",
+                        "format": "text"
+                    },
+                    "pros": {
+                        "label": "Pros",
+                        "format": "text"
+                    },
+                    "cons": {
+                        "label": "Cons",
+                        "format": "text"
+                    },
+                    "general_comments": {
+                        "label": "Comments",
+                        "format": "text"
+                    },
+                    "product_url": {
+                        "label": "URL",
+                        "format": "link"
+                    }
+                }
+            }
+        }
+    }
+}
