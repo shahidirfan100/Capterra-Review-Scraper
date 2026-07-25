@@ -4,7 +4,7 @@ import { CookieJar } from 'tough-cookie';
 
 const DEFAULT_START_URL = 'https://www.capterra.com/p/190778/QuickBooks-Online/reviews/';
 const REVIEWS_PER_PAGE = 25;
-const BROWSER_PROFILES = ['chrome142', 'firefox144', 'chrome131', 'okhttp4', 'chrome'];
+const BROWSER_PROFILES = ['okhttp4', 'firefox133', 'okhttp', 'chrome', 'okhttp3'];
 
 await Actor.init();
 
@@ -130,16 +130,16 @@ async function fetchPage(url, session, proxyConf) {
                 return { status: response.status, body };
             }
 
-            log.warning(`HTTP ${response.status} with ${browser}, rotating (${attempt}/${maxRetries})`);
+            log.debug(`HTTP ${response.status} with ${browser}, rotating (${attempt}/${maxRetries})`);
         } catch (err) {
             if (attempt === maxRetries) throw err;
-            log.warning(`Request error with ${browser}, rotating (${attempt}/${maxRetries}): ${err.message}`);
+            log.debug(`Request error with ${browser}, rotating (${attempt}/${maxRetries}): ${err.message}`);
         }
 
         await sleep(attempt * 1500 + Math.random() * 1000);
     }
 
-    throw new Error(`Failed to fetch ${url}`);
+    throw new Error('Failed to fetch page after retries');
 }
 
 function extractBalancedObject(text, key) {
@@ -254,7 +254,7 @@ async function run() {
     for (const baseUrl of startReviewUrls) {
         if (saved >= resultsWanted) break;
 
-        const session = {
+        let session = {
             cookieJar: new CookieJar(),
             client: null,
             proxyUrl: undefined,
@@ -262,12 +262,30 @@ async function run() {
 
         for (let page = 1; page <= maxPages && saved < resultsWanted; page++) {
             const pageUrl = buildPageUrl(baseUrl, page);
-            log.info(`Fetching page ${page}: ${pageUrl}`);
+            log.info(`Fetching page ${page}`);
 
-            const { status, body } = await fetchPage(pageUrl, session, proxyConf);
+            let status;
+            let body;
+
+            for (let sessionRetry = 0; sessionRetry <= 1; sessionRetry++) {
+                if (sessionRetry > 0) {
+                    log.warning(`Session dead on page ${page}, renewing`);
+                    session = {
+                        cookieJar: new CookieJar(),
+                        client: null,
+                        proxyUrl: undefined,
+                    };
+                }
+
+                const result = await fetchPage(pageUrl, session, proxyConf);
+                status = result.status;
+                body = result.body;
+
+                if (status >= 200 && status < 300) break;
+            }
 
             if (status < 200 || status >= 300) {
-                log.warning(`HTTP ${status} for ${pageUrl}`);
+                log.warning(`HTTP ${status} for page ${page}, giving up`);
                 break;
             }
             pagesFetched++;
