@@ -1,10 +1,8 @@
-# Capterra Review Scraper
-
-Extract verified Capterra software reviews for product research, competitor tracking, and customer sentiment analysis. Collect review titles, ratings, reviewer profiles, pros, cons, dates, and product-level review counts from Capterra product pages.
-
 ## What does Capterra Review Scraper do?
 
-This Actor collects structured review data from any public Capterra product page. Provide a Capterra URL and it returns individual reviews with ratings, reviewer details, and qualitative feedback. Product profile URLs are converted to reviews pages automatically, and pagination runs until your requested result count is reached.
+Capterra Review Scraper extracts verified Capterra software reviews for product research, competitor tracking, and customer sentiment analysis. It collects review titles, ratings, reviewer profiles, pros, cons, dates, and product-level review counts from public Capterra product pages.
+
+Provide a Capterra URL and the Actor returns individual reviews with ratings, reviewer details, and qualitative feedback. Product profile URLs are converted to reviews pages automatically, and pagination runs until your requested result count is reached.
 
 ## Why use Capterra Review Scraper?
 
