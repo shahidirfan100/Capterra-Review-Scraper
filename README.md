@@ -2,87 +2,86 @@
 
 Extract verified Capterra software reviews for product research, competitor tracking, and customer sentiment analysis. Collect review titles, ratings, reviewer profiles, pros, cons, dates, and product-level review counts from Capterra product pages.
 
-## Features
+## What does Capterra Review Scraper do?
 
-- **Product review collection** - Gather Capterra reviews from product URLs or direct reviews URLs.
-- **Automatic URL handling** - Product profile URLs are converted to the matching reviews page.
-- **Pagination support** - Collect multiple review pages until your requested result count is reached.
-- **Detailed ratings** - Capture overall rating plus ease of use, support, features, value, and recommendation scores when available.
-- **Clean datasets** - Empty fields are removed before records are saved.
-- **Stable request pattern** - Uses Capterra's accepted review pagination shape for smooth runs.
+This Actor collects structured review data from any public Capterra product page. Provide a Capterra URL and it returns individual reviews with ratings, reviewer details, and qualitative feedback. Product profile URLs are converted to reviews pages automatically, and pagination runs until your requested result count is reached.
 
----
+## Why use Capterra Review Scraper?
 
-## Use Cases
+- **Structured review datasets** - Collect Capterra reviews without manual copying. Each review is returned as a consistent record with ratings, reviewer profile, and text fields separated.
+- **Automation-ready output** - Export results to JSON, CSV, Excel, or XML. Connect datasets to analysis tools, dashboards, or downstream systems.
+- **Use-case fit** - Support competitor research by comparing what buyers say across products. Build sentiment analysis datasets using separated pros and cons fields. Prepare sales battlecards using reviewer role, industry, and company size data. Monitor product feedback on a schedule to catch new reviews as they appear.
 
-### Competitor Research
+## What data can you extract from Capterra?
 
-Compare what buyers say about competing software products. Track recurring complaints, praised features, and reviewer industries to understand how products are positioned in the market.
+| Field | Description |
+|-------|-------------|
+| `review_title` | Review headline |
+| `overall_rating` | Overall star rating |
+| `review_date` | Published review date |
+| `pros` | Positive review text |
+| `cons` | Negative review text |
+| `reviewer_name` | Reviewer display name |
+| `reviewer_industry` | Reviewer industry |
+| `reviewer_company_size` | Reviewer company size |
+| `product_name` | Reviewed software product name |
 
-### Sentiment Analysis
+Additional data includes ease of use, customer service, features, and value for money sub-ratings, likelihood to recommend score, reviewer job title and time used, validation status, general comments, advice to other buyers, incentive disclosure, and total review count.
 
-Build review datasets for text analysis. Pros and cons fields are separated so you can classify positive and negative themes without manual cleanup.
+## How to use Capterra Review Scraper
 
-### Sales Enablement
-
-Use review evidence to prepare battlecards and objection handling. Reviewer role, industry, company size, and time used help sales teams focus on buyer segments that match their pipeline.
-
-### Product Monitoring
-
-Check new reviews regularly to spot changes in customer satisfaction. Sorting by most recent helps teams monitor fresh feedback and respond to emerging issues.
-
----
+1. Open the Actor on Apify Store.
+2. Enter a Capterra product or reviews URL.
+3. Set the number of reviews you want and optional page limit.
+4. Run the Actor.
+5. Download the dataset or connect it to your workflow.
 
 ## Input Parameters
 
-| Parameter            | Type    | Required | Default           | Description                                |
-| -------------------- | ------- | -------- | ----------------- | ------------------------------------------ |
-| `url`                | String  | Yes      | -                 | Capterra product or reviews URL to scrape. |
-| `results_wanted`     | Integer | No       | `20`              | Maximum number of reviews to collect.      |
-| `max_pages`          | Integer | No       | `3`               | Maximum number of review pages to fetch.   |
-| `proxyConfiguration` | Object  | No       | Residential proxy | Proxy settings for reliable collection.    |
-
----
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `url` | String | Yes | - | Capterra product or reviews URL to collect data from |
+| `results_wanted` | Integer | No | `20` | Maximum number of reviews to collect |
+| `max_pages` | Integer | No | `3` | Maximum number of review pages to fetch (each page usually contains up to 25 reviews) |
+| `proxyConfiguration` | Object | No | Residential proxy | Proxy configuration for reliable collection |
 
 ## Output Data
 
-Each dataset item can contain:
+Each dataset item can contain the following fields:
 
-| Field                            | Type    | Description                                                |
-| -------------------------------- | ------- | ---------------------------------------------------------- |
-| `review_id`                      | String  | Capterra review identifier.                                |
-| `product_name`                   | String  | Reviewed software product name.                            |
-| `review_title`                   | String  | Review headline.                                           |
-| `review_date`                    | String  | Published review date.                                     |
-| `overall_rating`                 | Number  | Overall star rating.                                       |
-| `ease_of_use_rating`             | Number  | Ease of use score.                                         |
-| `customer_service_rating`        | Number  | Customer service score.                                    |
-| `features_rating`                | Number  | Features score.                                            |
-| `value_for_money_rating`         | Number  | Value for money score.                                     |
-| `likelihood_to_recommend_rating` | Number  | Recommendation score.                                      |
-| `reviewer_name`                  | String  | Reviewer display name.                                     |
-| `reviewer_title`                 | String  | Reviewer job title or role.                                |
-| `reviewer_industry`              | String  | Reviewer industry.                                         |
-| `reviewer_company_size`          | String  | Reviewer company size.                                     |
-| `reviewer_time_used`             | String  | How long the reviewer used the product.                    |
-| `reviewer_profile_image`         | String  | Reviewer profile image URL.                                |
-| `reviewer_validated`             | Boolean | Whether the reviewer has been validated.                   |
-| `reviewer_validations`           | Array   | Validation methods (LinkedIn, BusinessEmail, ProofOfLink). |
-| `pros`                           | String  | Positive review text.                                      |
-| `cons`                           | String  | Negative review text.                                      |
-| `general_comments`               | String  | General review comments.                                   |
-| `advice_to_others`               | String  | Reviewer advice to other buyers.                           |
-| `chosen_reasons`                 | String  | Reasons the reviewer chose the product.                    |
-| `switching_reasons`              | String  | Reasons the reviewer switched to the product.              |
-| `incentive`                      | String  | Incentive disclosure code (NoIncentive, NominalGift).      |
-| `source_site`                    | String  | Source review site.                                        |
-| `review_source_code`             | String  | Review source code.                                        |
-| `review_source`                  | String  | Review source disclosure text.                             |
-| `product_url`                    | String  | Source Capterra reviews URL.                               |
-| `page`                           | Integer | Review page number.                                        |
-| `total_reviews`                  | Integer | Total review count shown for the product.                  |
-
----
+| Field | Type | Description |
+|-------|------|-------------|
+| `review_id` | String | Capterra review identifier |
+| `product_name` | String | Reviewed software product name |
+| `review_title` | String | Review headline |
+| `review_date` | String | Published review date |
+| `overall_rating` | Number | Overall star rating |
+| `ease_of_use_rating` | Number | Ease of use score |
+| `customer_service_rating` | Number | Customer service score |
+| `features_rating` | Number | Features score |
+| `value_for_money_rating` | Number | Value for money score |
+| `likelihood_to_recommend_rating` | Number | Recommendation score |
+| `reviewer_name` | String | Reviewer display name |
+| `reviewer_title` | String | Reviewer job title or role |
+| `reviewer_industry` | String | Reviewer industry |
+| `reviewer_company_size` | String | Reviewer company size |
+| `reviewer_time_used` | String | How long the reviewer used the product |
+| `reviewer_profile_image` | String | Reviewer profile image URL |
+| `reviewer_validated` | Boolean | Whether the reviewer has been validated |
+| `reviewer_validations` | Array | Validation methods (LinkedIn, BusinessEmail, ProofOfLink) |
+| `pros` | String | Positive review text |
+| `cons` | String | Negative review text |
+| `general_comments` | String | General review comments |
+| `advice_to_others` | String | Reviewer advice to other buyers |
+| `chosen_reasons` | String | Reasons the reviewer chose the product |
+| `switching_reasons` | String | Reasons the reviewer switched to the product |
+| `incentive` | String | Incentive disclosure code |
+| `source_site` | String | Source review site |
+| `review_source_code` | String | Review source code |
+| `review_source` | String | Review source disclosure text |
+| `product_url` | String | Source Capterra reviews URL |
+| `page` | Integer | Review page number |
+| `total_reviews` | Integer | Total review count shown for the product |
 
 ## Usage Examples
 
@@ -97,9 +96,9 @@ Collect 20 reviews from a product page:
 }
 ```
 
-### More Reviews
+### Larger Collection
 
-Collect reviews across more pages:
+Collect more reviews across additional pages:
 
 ```json
 {
@@ -111,7 +110,7 @@ Collect reviews across more pages:
 
 ### Start From a Later Page
 
-Begin from a specific Capterra reviews page:
+Begin collection from a specific Capterra reviews page:
 
 ```json
 {
@@ -123,8 +122,6 @@ Begin from a specific Capterra reviews page:
     }
 }
 ```
-
----
 
 ## Sample Output
 
@@ -160,36 +157,20 @@ Begin from a specific Capterra reviews page:
 }
 ```
 
----
-
 ## Tips for Best Results
 
-### Use Product or Reviews URLs
-
-- Product URLs such as `/p/190778/QuickBooks-Online/` work.
-- Reviews URLs such as `/p/190778/QuickBooks-Online/reviews/` also work.
-
-### Start Small
-
-- Use `results_wanted` of `20` for test runs.
-- Increase `max_pages` when collecting larger datasets.
-
-### Work With Pagination
-
-- Use `max_pages` to control how far the actor paginates.
-- Add `?page=2` to the input URL if you want to start from a later page.
-
----
+- Use complete, public URLs from Capterra. Both product URLs (`/p/190778/QuickBooks-Online/`) and reviews URLs (`/p/190778/QuickBooks-Online/reviews/`) work.
+- Start with a small `results_wanted` value for test runs. Increase `max_pages` when collecting larger datasets.
+- Check the dataset preview before scheduling larger runs to verify the data meets your needs.
+- Residential proxies are recommended for consistent production runs.
 
 ## Integrations
 
-Connect your data with:
-
-- **Google Sheets** - Review and filter records.
-- **Airtable** - Build a searchable review database.
-- **Webhooks** - Send new reviews to your own systems.
-- **Make** - Run scheduled review workflows.
-- **Zapier** - Trigger alerts and updates.
+- **Google Sheets** - Export review data to spreadsheets for filtering and analysis.
+- **Airtable** - Build a searchable review database with linked records.
+- **Webhooks** - Send new reviews to downstream systems after each run.
+- **Make or Zapier** - Connect results to no-code automations and alerts.
+- **API** - Access datasets programmatically from your own applications.
 
 ### Export Formats
 
@@ -198,44 +179,53 @@ Connect your data with:
 - **Excel** - For reporting.
 - **XML** - For system imports.
 
----
-
 ## Frequently Asked Questions
 
 ### Can I use either a product URL or a reviews URL?
 
-Yes. The actor accepts both Capterra product URLs and Capterra reviews URLs.
+Yes. The Actor accepts both Capterra product page URLs and direct reviews page URLs. Product URLs are converted to the reviews page automatically.
 
 ### How many reviews are collected per page?
 
-Capterra review pages usually show up to 25 reviews per page.
+Capterra review pages usually show up to 25 reviews per page. The `max_pages` parameter controls how many pages are fetched.
 
 ### Why are some fields missing?
 
-Some reviews do not include every rating, profile detail, or source field. Empty values are removed from the dataset.
+Some reviews do not include every rating, profile detail, or source field. Empty values are removed from the dataset automatically.
 
 ### Can I start from page 2 or later?
 
-Yes. Add a `page` query parameter to the Capterra reviews URL, such as `?page=2`.
+Yes. Add a `page` query parameter to the Capterra reviews URL, such as `?page=2`, to begin from a later page.
 
 ### Should I use a proxy?
 
-Yes. Residential proxies are recommended for consistent production runs.
+Residential proxies are recommended for consistent production runs. The Actor uses them by default when running on the Apify platform.
 
----
+### Can I export the data to CSV or Excel?
+
+Yes. Apify datasets can be downloaded in CSV, Excel, JSON, XML, and other supported formats from the Apify Console.
+
+### Can I run this Actor on a schedule?
+
+Yes. You can schedule the Actor in Apify Console to refresh data hourly, daily, weekly, or at another interval.
+
+### Is this Actor suitable for non-technical users?
+
+Yes. The Actor can be run from Apify Console with form-based inputs, and the output can be downloaded without writing code.
+
+### Is it legal to scrape Capterra?
+
+Scraping public web data can be legal, but you are responsible for complying with applicable laws, website terms, and privacy rules. This Actor collects only publicly available information that anyone can view in a browser.
+
+## Related Actors
+
+- [Hostelworld Reviews Scraper](https://apify.com/shahidirfan/hostelworld-reviews-scraper) - Extract guest reviews and ratings from Hostelworld property pages.
+- [Myntra Reviews Scraper](https://apify.com/shahidirfan/myntra-reviews-scraper) - Collect customer reviews and ratings from Myntra product pages.
 
 ## Support
 
-For issues or feature requests, contact support through the Apify Console.
-
-### Resources
-
-- [Apify Documentation](https://docs.apify.com/)
-- [API Reference](https://docs.apify.com/api/v2)
-- [Scheduling Runs](https://docs.apify.com/schedules)
-
----
+For issues, feature requests, or custom Actor work, use the Issues tab on the Actor page or contact the developer through Apify Console.
 
 ## Legal Notice
 
-This actor is designed for legitimate data collection purposes. Users are responsible for ensuring compliance with website terms of service and applicable laws. Use data responsibly and respect rate limits.
+This Actor is designed for legitimate data collection from publicly available Capterra pages. Users are responsible for using the data responsibly and complying with applicable laws and website terms of service.
