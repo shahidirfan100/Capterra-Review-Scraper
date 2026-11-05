@@ -9,6 +9,7 @@
             "type": "string",
             "description": "Capterra product or reviews URL. Product URLs are automatically converted to the reviews page.",
             "editor": "textfield",
+            "default": "https://www.capterra.com/p/190778/QuickBooks-Online/",
             "prefill": "https://www.capterra.com/p/190778/QuickBooks-Online/"
         },
         "results_wanted": {
@@ -17,7 +18,6 @@
             "description": "Maximum number of reviews to collect.",
             "minimum": 1,
             "default": 20,
-            "prefill": 20,
             "editor": "number"
         },
         "max_pages": {
@@ -26,7 +26,6 @@
             "description": "Maximum number of Capterra review pages to fetch. Each page usually contains up to 25 reviews.",
             "minimum": 1,
             "default": 3,
-            "prefill": 3,
             "editor": "number"
         },
         "proxyConfiguration": {
@@ -40,6 +39,5 @@
             }
         }
     },
-    "required": ["url"],
     "additionalProperties": false
 }

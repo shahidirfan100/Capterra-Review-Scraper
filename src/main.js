@@ -2,338 +2,214 @@ import { Actor, log } from 'apify';
 import { Impit } from 'impit';
 import { CookieJar } from 'tough-cookie';
 
-const DEFAULT_START_URL = 'https://www.capterra.com/p/190778/QuickBooks-Online/reviews/';
-const REVIEWS_PER_PAGE = 25;
-const BROWSER_PROFILES = ['okhttp4', 'firefox133', 'okhttp', 'chrome', 'okhttp3'];
+import {
+    buildPageUrl,
+    collectReviews,
+    isBlockedBody,
+    normalizeReview,
+    normalizeReviewUrl,
+    PAGE_SIZE,
+    parseProduct,
+    productNameFromUrl,
+} from './extract.js';
+
+const DEFAULT_URL = 'https://www.capterra.com/p/190778/QuickBooks-Online/';
 
 await Actor.init();
 
-const sleep = (ms) =>
-    new Promise((r) => {
-        setTimeout(r, ms);
-    });
+// Profiles that returned 200 on the RSC endpoint on 2026-11-05. The full list follows as fallback.
+const PREFERRED_PROFILES = ['okhttp4', 'okhttp3', 'okhttp', 'okhttp5', 'ios18', 'firefox133', 'firefox128', 'firefox'];
+const ALL_PROFILES = [
+    ...PREFERRED_PROFILES,
+    'chrome',
+    'chrome100',
+    'chrome101',
+    'chrome104',
+    'chrome107',
+    'chrome110',
+    'chrome116',
+    'chrome124',
+    'chrome125',
+    'chrome131',
+    'chrome136',
+    'chrome142',
+    'firefox135',
+    'firefox144',
+    'firefox158',
+];
 
-function cleanText(value) {
-    return String(value ?? '')
-        .replace(/\s+/g, ' ')
-        .replace(/[“”]/g, '"')
-        .trim();
-}
-
-function parseNumber(value) {
-    if (value == null || value === '') return undefined;
-    const n = Number(value);
-    return Number.isFinite(n) ? n : undefined;
-}
-
-function removeEmptyValues(value) {
-    if (Array.isArray(value)) {
-        const c = value.map(removeEmptyValues).filter((i) => i !== undefined);
-        return c.length ? c : undefined;
-    }
-    if (value && typeof value === 'object') {
-        const e = Object.entries(value)
-            .map(([k, v]) => [k, removeEmptyValues(v)])
-            .filter(([, v]) => v !== undefined);
-        return e.length ? Object.fromEntries(e) : undefined;
-    }
-    if (value == null || value === '') return undefined;
-    return value;
-}
-
-function extractUrl(item) {
-    if (!item) return undefined;
-    if (typeof item === 'string') return item;
-    if (typeof item === 'object') return item.url || item.href;
-    return undefined;
-}
-
-function normalizeReviewUrl(rawUrl) {
-    const url = new URL(rawUrl || DEFAULT_START_URL);
-    if (!/\/reviews\/?$/i.test(url.pathname)) {
-        url.pathname = url.pathname.replace(/\/?$/, '/reviews/');
-    }
-    return url;
-}
-
-function buildPageUrl(baseUrl, page) {
-    const url = new URL(baseUrl.href);
-    const startPage = Number(baseUrl.searchParams.get('page')) || 1;
-    const p = startPage + page - 1;
-    if (p > 1) url.searchParams.set('page', String(p));
-    else url.searchParams.delete('page');
-    url.searchParams.delete('sort');
-    return url.href;
-}
-
-function getRscHeaders(url) {
-    const u = new URL(url);
-    return {
+const HEADER_VARIANTS = [
+    (url) => ({ referer: 'https://www.capterra.com/', rsc: '1', 'next-url': url.pathname + url.search }),
+    () => ({ rsc: '1' }),
+    (url) => ({
         referer: 'https://www.capterra.com/',
         rsc: '1',
-        'next-url': u.pathname + u.search,
-    };
-}
+        'next-url': url.pathname + url.search,
+        accept: 'text/x-component',
+    }),
+];
 
-function createClient(browser, proxyUrl, cookieJar) {
-    const opts = {
-        browser,
+const MAX_ATTEMPTS_PER_PAGE = 10;
+
+const sleep = (ms) =>
+    new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+
+function createClient(profile, proxyUrl, cookieJar) {
+    return new Impit({
+        browser: profile,
+        proxyUrl,
         timeout: 30000,
-    };
-    if (proxyUrl) opts.proxyUrl = proxyUrl;
-    if (cookieJar) {
-        opts.cookieJar = {
+        cookieJar: {
             getCookieString: (url) => cookieJar.getCookieString(url),
             setCookie: (cookie, url) => cookieJar.setCookie(cookie, url),
-        };
-    }
-    return new Impit(opts);
-}
-
-async function fetchPage(url, session, proxyConf) {
-    const maxRetries = 5;
-    const isCloud = Actor.isAtHome();
-    const useProxyOnFirstAttempt = isCloud && proxyConf != null;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const browser = BROWSER_PROFILES[(attempt - 1) % BROWSER_PROFILES.length];
-
-        const needsNewClient = attempt > 1 || !session.client || useProxyOnFirstAttempt;
-        if (needsNewClient) {
-            const shouldProxy = proxyConf != null && (useProxyOnFirstAttempt || attempt > 1);
-            const proxyUrl = shouldProxy ? await proxyConf.newUrl() : undefined;
-            /* eslint-disable-next-line no-param-reassign */
-            session.client = createClient(browser, proxyUrl, session.cookieJar);
-            /* eslint-disable-next-line no-param-reassign */
-            session.proxyUrl = proxyUrl;
-        }
-
-        try {
-            const response = await session.client.fetch(url, {
-                redirect: 'follow',
-                headers: getRscHeaders(url),
-            });
-
-            const body = await response.text();
-
-            if (response.ok && body.includes('"textReviews"')) {
-                return { status: response.status, body };
-            }
-
-            const retryable =
-                response.status === 403 ||
-                response.status === 429 ||
-                response.status >= 500 ||
-                /Attention Required|captcha|Access Denied|Just a moment/i.test(body);
-
-            if (!retryable || attempt === maxRetries) {
-                return { status: response.status, body };
-            }
-
-            log.debug(`HTTP ${response.status} with ${browser}, rotating (${attempt}/${maxRetries})`);
-        } catch (err) {
-            if (attempt === maxRetries) throw err;
-            log.debug(`Request error with ${browser}, rotating (${attempt}/${maxRetries}): ${err.message}`);
-        }
-
-        await sleep(attempt * 1500 + Math.random() * 1000);
-    }
-
-    throw new Error('Failed to fetch page after retries');
-}
-
-function extractBalancedObject(text, key) {
-    const ki = text.indexOf(key);
-    if (ki === -1) return undefined;
-    const start = text.indexOf('{', ki);
-    if (start === -1) return undefined;
-    let depth = 0;
-    let inStr = false;
-    let esc = false;
-    for (let i = start; i < text.length; i++) {
-        const c = text[i];
-        if (inStr) {
-            if (esc) esc = false;
-            else if (c === '\\') esc = true;
-            else if (c === '"') inStr = false;
-            continue;
-        }
-        if (c === '"') inStr = true;
-        else if (c === '{') depth++;
-        else if (c === '}') {
-            depth--;
-            if (depth === 0) return text.slice(start, i + 1);
-        }
-    }
-    return undefined;
-}
-
-function normalizeProductName(baseUrl) {
-    const parts = baseUrl.pathname.split('/').filter(Boolean);
-    return (parts[2] || '').replace(/-/g, ' ').trim();
-}
-
-function extractProductFromRsc(body) {
-    const pt = extractBalancedObject(body, '"product":');
-    return pt ? JSON.parse(pt) : undefined;
-}
-
-function mapReview(review, product, pageUrl, pageNumber, fallbackName) {
-    const reviewer = review.reviewer || {};
-    const source = review.reviewSource || {};
-    const summary = product.reviewSummary || {};
-
-    return removeEmptyValues({
-        review_id: review.reviewId || review.globalReviewId,
-        product_name: product.name || product.productName || fallbackName,
-        product_url: pageUrl,
-        page: pageNumber,
-        total_reviews: parseNumber(summary.totalReviews),
-        review_title: cleanText(review.title),
-        review_date: cleanText(review.writtenOn),
-        overall_rating: parseNumber(review.overallRating),
-        ease_of_use_rating: parseNumber(review.easeOfUseRating),
-        customer_service_rating: parseNumber(review.customerSupportRating),
-        features_rating: parseNumber(review.functionalityRating),
-        value_for_money_rating: parseNumber(review.valueForMoneyRating),
-        likelihood_to_recommend_rating: parseNumber(review.recommendationRating),
-        reviewer_name: cleanText(reviewer.fullName),
-        reviewer_title: cleanText(reviewer.jobTitle),
-        reviewer_industry: cleanText(reviewer.industry),
-        reviewer_company_size: cleanText(reviewer.companySize),
-        reviewer_time_used: cleanText(reviewer.timeUsedProduct),
-        reviewer_profile_image: reviewer.profilePicUrl,
-        reviewer_validated: reviewer.isValidated,
-        reviewer_validations: reviewer.validationsPassed,
-        pros: cleanText(review.prosText),
-        cons: cleanText(review.consText),
-        general_comments: cleanText(review.generalComments),
-        advice_to_others: cleanText(review.adviceToOthers),
-        chosen_reasons: review.chosenReasons,
-        switching_reasons: review.switchingReasons,
-        incentive: review.incentivized,
-        source_site: review.sourceSite,
-        review_source_code: source.code,
-        review_source: source.tooltip,
+        },
     });
 }
 
-function extractReviews(body, pageUrl, pageNumber, baseUrl) {
-    const product = extractProductFromRsc(body);
-    const reviews = product?.textReviews;
-    if (!Array.isArray(reviews)) return [];
-    const fallback = normalizeProductName(baseUrl);
-    return reviews.map((r) => mapReview(r, product, pageUrl, pageNumber, fallback)).filter(Boolean);
+function hasReviewData(product) {
+    // Accept an empty known list (real end of pagination) or any array that still looks like reviews after a rename.
+    return (
+        collectReviews(product).length > 0 ||
+        Array.isArray(product.hybridReviewPage) ||
+        Array.isArray(product.textReviews)
+    );
+}
+
+function retryAfterMs(response) {
+    const seconds = Number(response.headers.get('retry-after'));
+    return Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds * 1000, 10000) : 0;
+}
+
+async function fetchProduct(url, state, proxyConf) {
+    let lastError;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_PAGE; attempt += 1) {
+        const profile = ALL_PROFILES[(attempt - 1) % ALL_PROFILES.length];
+        const proxyUrl = proxyConf ? await proxyConf.newUrl() : undefined;
+
+        // A fresh jar every few attempts drops cookies that are tied to a throttled edge node.
+        if (attempt > 1 && attempt % 5 === 0) state.resetSession();
+
+        const headers = HEADER_VARIANTS[(attempt - 1) % HEADER_VARIANTS.length](url);
+        let waitMs = 800 + attempt * 400 + Math.random() * 600;
+
+        try {
+            const response = await createClient(profile, proxyUrl, state.cookieJar).fetch(url.href, {
+                headers,
+                redirect: 'follow',
+            });
+            const body = await response.text();
+            const product = parseProduct(body);
+
+            if (response.ok && product && hasReviewData(product)) {
+                log.debug(`RSC fetch OK with ${profile}`);
+                return product;
+            }
+
+            lastError = new Error(`HTTP ${response.status}, no review payload (${body.length} bytes)`);
+            if (isBlockedBody(response.status, body)) waitMs = Math.max(waitMs, retryAfterMs(response));
+            log.debug(`Attempt ${attempt}/${MAX_ATTEMPTS_PER_PAGE} with ${profile}: ${lastError.message}`);
+        } catch (err) {
+            lastError = err;
+            log.debug(`Attempt ${attempt}/${MAX_ATTEMPTS_PER_PAGE} with ${profile}: ${err.message}`);
+        }
+
+        if (attempt < MAX_ATTEMPTS_PER_PAGE) await sleep(waitMs);
+    }
+
+    throw new Error(`Capterra did not return reviews for ${url.href}: ${lastError?.message}`);
 }
 
 async function run() {
-    const input = (await Actor.getInput()) || {};
-    const { url, startUrl, startUrls, results_wanted = 20, max_pages = 3, proxyConfiguration } = input;
+    const input = (await Actor.getInput()) ?? {};
+    const resultsWanted = Math.max(1, Number(input.results_wanted) || 20);
+    const maxPages = Math.max(1, Number(input.max_pages) || 3);
+    const baseUrl = normalizeReviewUrl(input.url || DEFAULT_URL);
 
-    const rawUrls = [...(Array.isArray(startUrls) ? startUrls : []).map(extractUrl), startUrl, url].filter(Boolean);
-    const startReviewUrls = (rawUrls.length ? rawUrls : [DEFAULT_START_URL]).map(normalizeReviewUrl);
-    const resultsWanted = Math.max(1, Number(results_wanted) || 20);
-    const maxPages = Math.max(1, Number(max_pages) || 1);
-
-    const isCloud = Actor.isAtHome();
-    const wantsProxy = proxyConfiguration?.useApifyProxy || proxyConfiguration?.proxyUrls?.length;
+    const wantsProxy = Boolean(input.proxyConfiguration?.useApifyProxy || input.proxyConfiguration?.proxyUrls?.length);
     const proxyConf =
-        wantsProxy && isCloud ? await Actor.createProxyConfiguration({ ...proxyConfiguration }) : undefined;
+        wantsProxy && Actor.isAtHome() ? await Actor.createProxyConfiguration(input.proxyConfiguration) : undefined;
+    if (wantsProxy && !proxyConf) log.info('Local run: Apify Proxy is skipped outside the Apify platform.');
 
-    if (wantsProxy && !isCloud) {
-        log.info('Local run: Apify Proxy skipped outside Apify.');
-    }
-    log.info(`Proxy: ${proxyConf ? 'enabled' : 'disabled'}`);
+    log.info(`Start | target=${resultsWanted} | max_pages=${maxPages} | proxy=${proxyConf ? 'on' : 'off'}`);
 
     let saved = 0;
     let pagesFetched = 0;
+    let pageFailures = 0;
     const seenIds = new Set();
+    const state = {
+        cookieJar: new CookieJar(),
+        resetSession() {
+            this.cookieJar = new CookieJar();
+        },
+    };
+    const firstPage = Number(baseUrl.searchParams.get('page')) || 1;
 
-    log.info(`Start | urls=${startReviewUrls.length} | target=${resultsWanted} | max_pages=${maxPages}`);
+    for (let page = firstPage; page < firstPage + maxPages && saved < resultsWanted; page += 1) {
+        const pageUrl = buildPageUrl(baseUrl, page);
 
-    for (const baseUrl of startReviewUrls) {
-        if (saved >= resultsWanted) break;
+        let product;
+        try {
+            product = await fetchProduct(pageUrl, state, proxyConf);
+        } catch (err) {
+            pageFailures += 1;
+            log.warning(`Page ${page} failed: ${err.message}`);
+            break;
+        }
+        pagesFetched += 1;
 
-        let session = {
-            cookieJar: new CookieJar(),
-            client: null,
-            proxyUrl: undefined,
-        };
+        const records = collectReviews(product)
+            .map((raw) =>
+                normalizeReview(raw, {
+                    product,
+                    pageUrl: pageUrl.href,
+                    page,
+                    fallbackName: productNameFromUrl(baseUrl),
+                }),
+            )
+            .filter(Boolean);
 
-        for (let page = 1; page <= maxPages && saved < resultsWanted; page++) {
-            const pageUrl = buildPageUrl(baseUrl, page);
-            log.info(`Fetching page ${page}`);
-
-            let status;
-            let body;
-
-            for (let sessionRetry = 0; sessionRetry <= 1; sessionRetry++) {
-                if (sessionRetry > 0) {
-                    log.warning(`Session dead on page ${page}, renewing`);
-                    session = {
-                        cookieJar: new CookieJar(),
-                        client: null,
-                        proxyUrl: undefined,
-                    };
+        const batch = [];
+        let duplicates = 0;
+        for (const record of records) {
+            if (record.review_id) {
+                if (seenIds.has(record.review_id)) {
+                    duplicates += 1;
+                    continue;
                 }
-
-                const result = await fetchPage(pageUrl, session, proxyConf);
-                status = result.status;
-                body = result.body;
-
-                if (status >= 200 && status < 300) break;
+                seenIds.add(record.review_id);
             }
+            if (batch.length < resultsWanted - saved) batch.push(record);
+        }
 
-            if (status < 200 || status >= 300) {
-                log.warning(`HTTP ${status} for page ${page}, giving up`);
-                break;
-            }
-            pagesFetched++;
+        if (!batch.length) {
+            log.info(`Page ${page}: no new reviews (${duplicates} duplicates). Stopping.`);
+            break;
+        }
 
-            const records = extractReviews(body, pageUrl, page, baseUrl);
+        await Actor.pushData(batch);
+        saved += batch.length;
+        log.info(`Saved ${batch.length} | page=${page} | total=${saved}/${resultsWanted}`);
 
-            if (!records.length) {
-                const blocked = /Attention Required|captcha|Access Denied|Just a moment/i.test(body);
-                log.warning(`No reviews on page ${page}${blocked ? ' (blocked)' : ''}`);
-                break;
-            }
-
-            const deduped = [];
-            let dupes = 0;
-            for (const r of records) {
-                const id = r.review_id;
-                if (id) {
-                    if (seenIds.has(id)) {
-                        dupes++;
-                        continue;
-                    }
-                    seenIds.add(id);
-                }
-                deduped.push(r);
-            }
-
-            if (!deduped.length) {
-                log.info(`All ${records.length} reviews on page ${page} are duplicates.`);
-                if (records.length < REVIEWS_PER_PAGE) break;
-                continue;
-            }
-
-            const batch = deduped.slice(0, resultsWanted - saved);
-            await Actor.pushData(batch);
-            saved += batch.length;
-            log.info(
-                `Saved ${batch.length} (${dupes} dupes, ${deduped.length - batch.length} over) | ${saved}/${resultsWanted}`,
-            );
-
-            if (records.length < REVIEWS_PER_PAGE) break;
+        // Page 1 carries an extra summary entry, so a short full-review count is normal.
+        if (records.length < PAGE_SIZE - 1) {
+            log.info(`Page ${page} was the last page (${records.length} full reviews).`);
+            break;
         }
     }
 
-    log.info(`Done | saved=${saved} | pages=${pagesFetched}`);
+    log.info(`Done | saved=${saved} | pages=${pagesFetched} | failed_pages=${pageFailures}`);
+    if (!saved) throw new Error('No reviews collected. See API_DISCOVERY.md for diagnosis steps.');
 }
 
+let exitCode = 0;
 try {
     await run();
+} catch (err) {
+    exitCode = 1;
+    log.error(err.message);
 } finally {
-    await Actor.exit();
+    await Actor.exit({ exitCode });
 }

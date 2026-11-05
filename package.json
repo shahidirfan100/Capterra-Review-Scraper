@@ -5,7 +5,7 @@
     "type": "module",
     "dependencies": {
         "apify": "^3.7.2",
-        "impit": "^0.14.3",
+        "impit": "^0.14.8",
         "tough-cookie": "^6.0.2"
     },
     "devDependencies": {
@@ -13,7 +13,7 @@
         "eslint": "^9.29.0",
         "eslint-config-prettier": "^10.1.5",
         "prettier": "^3.5.3",
-        "vitest": "^4.1.0"
+        "vitest": "^3.2.4"
     },
     "scripts": {
         "start": "node src/main.js",

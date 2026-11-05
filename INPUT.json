@@ -1,10 +1,5 @@
 {
     "url": "https://www.capterra.com/p/190778/QuickBooks-Online/",
     "results_wanted": 20,
-    "max_pages": 3,
-    "proxyConfiguration": {
-        "useApifyProxy": true,
-        "apifyProxyCountry": "US",
-        "apifyProxyGroups": ["RESIDENTIAL"]
-    }
+    "max_pages": 3
 }

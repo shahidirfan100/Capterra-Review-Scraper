@@ -2,7 +2,8 @@ FROM apify/actor-node:22
 
 COPY --chown=myuser:myuser package*.json ./
 RUN npm --quiet set progress=false \
-    && npm install --omit=dev --include=optional \
+    && npm install --omit=dev \
+    && node -e "import('impit').then(() => console.log('impit ok'))" \
     && rm -rf ~/.npm
 
 COPY --chown=myuser:myuser . ./

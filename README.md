@@ -12,17 +12,17 @@ Provide a Capterra URL and the Actor returns individual reviews with ratings, re
 
 ## What data can you extract from Capterra?
 
-| Field | Description |
-|-------|-------------|
-| `review_title` | Review headline |
-| `overall_rating` | Overall star rating |
-| `review_date` | Published review date |
-| `pros` | Positive review text |
-| `cons` | Negative review text |
-| `reviewer_name` | Reviewer display name |
-| `reviewer_industry` | Reviewer industry |
-| `reviewer_company_size` | Reviewer company size |
-| `product_name` | Reviewed software product name |
+| Field                   | Description                    |
+| ----------------------- | ------------------------------ |
+| `review_title`          | Review headline                |
+| `overall_rating`        | Overall star rating            |
+| `review_date`           | Published review date          |
+| `pros`                  | Positive review text           |
+| `cons`                  | Negative review text           |
+| `reviewer_name`         | Reviewer display name          |
+| `reviewer_industry`     | Reviewer industry              |
+| `reviewer_company_size` | Reviewer company size          |
+| `product_name`          | Reviewed software product name |
 
 Additional data includes ease of use, customer service, features, and value for money sub-ratings, likelihood to recommend score, reviewer job title and time used, validation status, general comments, advice to other buyers, incentive disclosure, and total review count.
 
@@ -36,50 +36,50 @@ Additional data includes ease of use, customer service, features, and value for 
 
 ## Input Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `url` | String | Yes | - | Capterra product or reviews URL to collect data from |
-| `results_wanted` | Integer | No | `20` | Maximum number of reviews to collect |
-| `max_pages` | Integer | No | `3` | Maximum number of review pages to fetch (each page usually contains up to 25 reviews) |
-| `proxyConfiguration` | Object | No | Residential proxy | Proxy configuration for reliable collection |
+| Parameter            | Type    | Required | Default                        | Description                                                                           |
+| -------------------- | ------- | -------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| `url`                | String  | No       | QuickBooks Online reviews page | Capterra product or reviews URL to collect data from                                  |
+| `results_wanted`     | Integer | No       | `20`                           | Maximum number of reviews to collect                                                  |
+| `max_pages`          | Integer | No       | `3`                            | Maximum number of review pages to fetch (each page usually contains up to 25 reviews) |
+| `proxyConfiguration` | Object  | No       | Residential proxy              | Proxy configuration for reliable collection                                           |
 
 ## Output Data
 
 Each dataset item can contain the following fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `review_id` | String | Capterra review identifier |
-| `product_name` | String | Reviewed software product name |
-| `review_title` | String | Review headline |
-| `review_date` | String | Published review date |
-| `overall_rating` | Number | Overall star rating |
-| `ease_of_use_rating` | Number | Ease of use score |
-| `customer_service_rating` | Number | Customer service score |
-| `features_rating` | Number | Features score |
-| `value_for_money_rating` | Number | Value for money score |
-| `likelihood_to_recommend_rating` | Number | Recommendation score |
-| `reviewer_name` | String | Reviewer display name |
-| `reviewer_title` | String | Reviewer job title or role |
-| `reviewer_industry` | String | Reviewer industry |
-| `reviewer_company_size` | String | Reviewer company size |
-| `reviewer_time_used` | String | How long the reviewer used the product |
-| `reviewer_profile_image` | String | Reviewer profile image URL |
-| `reviewer_validated` | Boolean | Whether the reviewer has been validated |
-| `reviewer_validations` | Array | Validation methods (LinkedIn, BusinessEmail, ProofOfLink) |
-| `pros` | String | Positive review text |
-| `cons` | String | Negative review text |
-| `general_comments` | String | General review comments |
-| `advice_to_others` | String | Reviewer advice to other buyers |
-| `chosen_reasons` | String | Reasons the reviewer chose the product |
-| `switching_reasons` | String | Reasons the reviewer switched to the product |
-| `incentive` | String | Incentive disclosure code |
-| `source_site` | String | Source review site |
-| `review_source_code` | String | Review source code |
-| `review_source` | String | Review source disclosure text |
-| `product_url` | String | Source Capterra reviews URL |
-| `page` | Integer | Review page number |
-| `total_reviews` | Integer | Total review count shown for the product |
+| Field                            | Type    | Description                                               |
+| -------------------------------- | ------- | --------------------------------------------------------- |
+| `review_id`                      | String  | Capterra review identifier                                |
+| `product_name`                   | String  | Reviewed software product name                            |
+| `review_title`                   | String  | Review headline                                           |
+| `review_date`                    | String  | Published review date                                     |
+| `overall_rating`                 | Number  | Overall star rating                                       |
+| `ease_of_use_rating`             | Number  | Ease of use score                                         |
+| `customer_service_rating`        | Number  | Customer service score                                    |
+| `features_rating`                | Number  | Features score                                            |
+| `value_for_money_rating`         | Number  | Value for money score                                     |
+| `likelihood_to_recommend_rating` | Number  | Recommendation score                                      |
+| `reviewer_name`                  | String  | Reviewer display name                                     |
+| `reviewer_title`                 | String  | Reviewer job title or role                                |
+| `reviewer_industry`              | String  | Reviewer industry                                         |
+| `reviewer_company_size`          | String  | Reviewer company size                                     |
+| `reviewer_time_used`             | String  | How long the reviewer used the product                    |
+| `reviewer_profile_image`         | String  | Reviewer profile image URL                                |
+| `reviewer_validated`             | Boolean | Whether the reviewer has been validated                   |
+| `reviewer_validations`           | Array   | Validation methods (LinkedIn, BusinessEmail, ProofOfLink) |
+| `pros`                           | String  | Positive review text                                      |
+| `cons`                           | String  | Negative review text                                      |
+| `general_comments`               | String  | General review comments                                   |
+| `advice_to_others`               | String  | Reviewer advice to other buyers                           |
+| `chosen_reasons`                 | String  | Reasons the reviewer chose the product                    |
+| `switching_reasons`              | String  | Reasons the reviewer switched to the product              |
+| `incentive`                      | String  | Incentive disclosure code                                 |
+| `source_site`                    | String  | Source review site                                        |
+| `review_source_code`             | String  | Review source code                                        |
+| `review_source`                  | String  | Review source disclosure text                             |
+| `product_url`                    | String  | Source Capterra reviews URL                               |
+| `page`                           | Integer | Review page number                                        |
+| `total_reviews`                  | Integer | Total review count shown for the product                  |
 
 ## Usage Examples
 
@@ -125,33 +125,26 @@ Begin collection from a specific Capterra reviews page:
 
 ```json
 {
-    "review_id": "Capterra___7174523",
+    "review_id": "7f07475a-2412-4233-b724-18a466b97852",
     "product_name": "QuickBooks Online",
-    "review_title": "Reliable Accounting Software That Saves Time and Simplifies Financial Management",
-    "review_date": "June 24, 2026",
-    "overall_rating": 4,
-    "ease_of_use_rating": 5,
-    "customer_service_rating": 2,
+    "product_url": "https://www.capterra.com/p/190778/QuickBooks-Online/reviews/?page=2",
+    "page": 2,
+    "total_reviews": 8537,
+    "review_title": "Powerful Accounting Software Held Back by Poor Support and Reliability Issues",
+    "review_date": "June 4, 2026",
+    "overall_rating": 2,
+    "ease_of_use_rating": 2,
+    "customer_service_rating": 1,
     "features_rating": 3,
-    "value_for_money_rating": 4,
-    "likelihood_to_recommend_rating": 7,
-    "reviewer_name": "Jeff H.",
-    "reviewer_title": "Front office manager",
-    "reviewer_industry": "Medical Practice",
-    "reviewer_company_size": "11 - 50 employees",
-    "reviewer_time_used": "More than 2 years",
-    "reviewer_validated": true,
-    "reviewer_validations": ["ProofOfLink"],
-    "pros": "I feel like QuickBooks provides good value for what you pay...",
-    "cons": "Customer support has been helpful whenever I've needed assistance...",
-    "general_comments": "Overall, my experience with QuickBooks has been very positive...",
-    "incentive": "NoIncentive",
-    "source_site": "Capterra",
-    "review_source_code": "NO",
-    "review_source": "No Incentive Offered: This review was submitted organically.",
-    "product_url": "https://www.capterra.com/p/190778/QuickBooks-Online/reviews/",
-    "page": 1,
-    "total_reviews": 8483
+    "value_for_money_rating": 2,
+    "likelihood_to_recommend_rating": 2,
+    "reviewer_name": "Reviewer",
+    "reviewer_title": "Founder",
+    "reviewer_time_used": "1-3 years",
+    "pros": "QuickBooks Online is widely accepted by accountants and integrates with many third-party platforms...",
+    "cons": "The platform feels increasingly expensive for what it delivers...",
+    "general_comments": "I've used QuickBooks Online for my business because it's essentially the industry standard...",
+    "source_site": "CAPTERRA"
 }
 ```
 
@@ -185,7 +178,7 @@ Yes. The Actor accepts both Capterra product page URLs and direct reviews page U
 
 ### How many reviews are collected per page?
 
-Capterra review pages usually show up to 25 reviews per page. The `max_pages` parameter controls how many pages are fetched.
+Capterra returns up to 25 review entries per page. The first page also contains one summary entry, so a full first page yields 24 reviews. The `max_pages` parameter controls how many pages are fetched.
 
 ### Why are some fields missing?
 
